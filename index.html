@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Retirement Calculator</title>
+    <!-- Google Fonts & Chart.js -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --border-color: #334155;
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --accent: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --input-bg: #0f172a;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.5;
+            padding: 24px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1280px;
+            margin: 0 auto;
+        }
+
+        header {
+            margin-bottom: 24px;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 2.25rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #60a5fa 0%, #34d399 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 6px;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 1.05rem;
+        }
+
+        .retire-tomorrow-banner {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .btn-retire-tomorrow {
+            background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 24px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 14px rgba(245, 158, 11, 0.4);
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-retire-tomorrow:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(245, 158, 11, 0.6);
+        }
+
+        .btn-reset-retirement {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-muted);
+            border: 1px solid var(--border-color);
+            padding: 10px 16px;
+            border-radius: 24px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-reset-retirement:hover {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        .warning-msg {
+            background: rgba(245, 158, 11, 0.15);
+            border: 1px solid var(--warning);
+            color: #fcd34d;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            margin-bottom: 16px;
+            display: none;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 390px 1fr;
+            gap: 24px;
+        }
+
+        @media (max-width: 1024px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+        }
+
+        .card-title {
+            font-size: 1.15rem;
+            font-weight: 600;
+            margin-bottom: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: var(--text-main);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-prefix, .input-suffix {
+            position: absolute;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            pointer-events: none;
+        }
+
+        .input-prefix { left: 14px; }
+        .input-suffix { right: 14px; }
+
+        input[type="number"], select {
+            width: 100%;
+            padding: 10px 14px;
+            background-color: var(--input-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-main);
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        input.has-prefix { padding-left: 32px; }
+        input.has-suffix { padding-right: 36px; }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+
+        .grid-2col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .metric-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.2s ease;
+        }
+
+        .metric-card.clickable {
+            cursor: pointer;
+        }
+
+        .metric-card.clickable:hover {
+            transform: translateY(-3px);
+            border-color: var(--primary);
+        }
+
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background-color: var(--primary);
+        }
+
+        .metric-card.accent::before { background-color: var(--accent); }
+        .metric-card.warning::before { background-color: var(--warning); }
+        .metric-card.danger::before { background-color: var(--danger); }
+
+        .metric-label {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .metric-value {
+            font-size: 1.45rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .metric-sub {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+        }
+
+        .click-hint {
+            font-size: 0.7rem;
+            background: var(--primary);
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 330px;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+            max-height: 380px;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin-top: 16px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.875rem;
+        }
+
+        th {
+            background-color: var(--input-bg);
+            color: var(--text-muted);
+            padding: 12px 16px;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        td {
+            padding: 10px 16px;
+            border-top: 1px solid var(--border-color);
+            color: var(--text-main);
+        }
+
+        tr:nth-child(even) {
+            background-color: rgba(255, 255, 255, 0.02);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .badge-active { background: rgba(239, 68, 68, 0.2); color: #fca5a5; }
+        .badge-ended { background: rgba(16, 185, 129, 0.2); color: #6ee7b7; }
+        .badge-retired { background: rgba(59, 130, 246, 0.2); color: #93c5fd; }
+
+        .currency-selector {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .currency-selector label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .currency-selector select {
+            width: auto;
+            padding: 4px 8px;
+            font-size: 0.85rem;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(4px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            width: 90%;
+            max-width: 520px;
+            padding: 28px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+            animation: fadeIn 0.2s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 12px;
+        }
+
+        .modal-header h3 {
+            font-size: 1.25rem;
+            color: var(--text-main);
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        .close-btn:hover { color: white; }
+
+        .sip-breakdown-box {
+            background: var(--input-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 16px;
+            margin-top: 16px;
+        }
+
+        .sip-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px dashed var(--border-color);
+        }
+        .sip-row:last-child { border-bottom: none; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>Retirement Financial Calculator</h1>
+        <p>Plan your freedom: inflation-adjusted target, EMI timelines & flexible SIP return calculator.</p>
+    </header>
+
+    <!-- Retire Tomorrow Quick Action -->
+    <div class="retire-tomorrow-banner">
+        <button type="button" class="btn-retire-tomorrow" onclick="enableRetireTomorrow()">
+            ⚡ Retire Tomorrow :-)
+        </button>
+        <button type="button" class="btn-reset-retirement" id="btnResetAge" style="display:none;" onclick="resetRetirementAge()">
+            ↩️ Reset Retirement Age (60)
+        </button>
+    </div>
+
+    <div class="currency-selector">
+        <label for="currencySymbol">Currency Symbol:</label>
+        <select id="currencySymbol" onchange="calculateRetirement()">
+            <option value="₹">₹ (INR)</option>
+            <option value="$">$ (USD)</option>
+            <option value="€">€ (EUR)</option>
+            <option value="£">£ (GBP)</option>
+        </select>
+    </div>
+
+    <div class="dashboard-grid">
+        <!-- Input Sidebar -->
+        <div class="card">
+            <div class="card-title">
+                <span>⚙️ Personal Financial Profile</span>
+            </div>
+
+            <div class="form-group">
+                <label for="currentAge">Current Age</label>
+                <input type="number" id="currentAge" value="30" min="18" max="90" oninput="calculateRetirement()">
+            </div>
+
+            <div class="form-group">
+                <label for="desiredRetireAge">Age by which you wish to retire</label>
+                <input type="number" id="desiredRetireAge" value="60" min="18" max="95" oninput="calculateRetirement()">
+            </div>
+
+            <div class="form-group">
+                <label for="lifeExpectancy">Expected Age You Wish to Live (Target Cap Age)</label>
+                <input type="number" id="lifeExpectancy" value="85" min="40" max="110" oninput="calculateRetirement()">
+            </div>
+
+            <div class="form-group">
+                <label for="currentSavings">Current Accumulated Savings / Investments</label>
+                <div class="input-wrapper">
+                    <span class="input-prefix curr-prefix">₹</span>
+                    <input type="number" id="currentSavings" class="has-prefix" value="500000" step="10000" oninput="calculateRetirement()">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="monthlyExpense">Current Monthly Base Expense (Excl. EMI)</label>
+                <div class="input-wrapper">
+                    <span class="input-prefix curr-prefix">₹</span>
+                    <input type="number" id="monthlyExpense" class="has-prefix" value="30000" step="1000" oninput="calculateRetirement()">
+                </div>
+            </div>
+
+            <div class="card-title" style="margin-top: 20px;">
+                <span>💳 Existing Loan / EMI Schedule</span>
+            </div>
+
+            <div class="form-group">
+                <label for="emiAmount">Total Current Monthly EMI</label>
+                <div class="input-wrapper">
+                    <span class="input-prefix curr-prefix">₹</span>
+                    <input type="number" id="emiAmount" class="has-prefix" value="15000" step="1000" oninput="calculateRetirement()">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="emiEndAge">Age Until Which EMI Needs to Be Paid</label>
+                <input type="number" id="emiEndAge" value="37" min="18" max="95" oninput="calculateRetirement()">
+                <span style="font-size: 0.78rem; color: var(--text-muted);" id="emiTenureText">EMI duration: 7 years</span>
+            </div>
+
+            <div class="card-title" style="margin-top: 20px;">
+                <span>📈 Inflation & Return Assumptions</span>
+            </div>
+
+            <div class="grid-2col">
+                <div class="form-group">
+                    <label for="inflationRate">Inflation (% p.a.)</label>
+                    <div class="input-wrapper">
+                        <input type="number" id="inflationRate" class="has-suffix" value="6.0" step="0.1" oninput="calculateRetirement()">
+                        <span class="input-suffix">%</span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="preRetirementReturn">Pre-Retire Growth</label>
+                    <div class="input-wrapper">
+                        <input type="number" id="preRetirementReturn" class="has-suffix" value="11.0" step="0.1" oninput="calculateRetirement()">
+                        <span class="input-suffix">%</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="postRetirementReturn">Post-Retire Return (% p.a.)</label>
+                <div class="input-wrapper">
+                    <input type="number" id="postRetirementReturn" class="has-suffix" value="7.5" step="0.1" oninput="calculateRetirement()">
+                    <span class="input-suffix">%</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Results Display -->
+        <div>
+            <!-- Non-blocking Inline Warning Message Banner -->
+            <div class="warning-msg" id="warningBanner">
+                ⚠️ <span id="warningBannerText">Please ensure Retirement Age is greater than Current Age, and Cap Age is greater than Retirement Age.</span>
+            </div>
+
+            <!-- Metrics Summary Cards -->
+            <div class="metrics-grid">
+                <div class="metric-card accent">
+                    <span class="metric-label">Target Corpus Required</span>
+                    <span class="metric-value" id="resCorpus">₹0</span>
+                    <span class="metric-sub" id="resCorpusSub">At retire age to last till cap age</span>
+                </div>
+
+                <div class="metric-card">
+                    <span class="metric-label">Grown Val of Current Savings</span>
+                    <span class="metric-value" id="resFvSavings">₹0</span>
+                    <span class="metric-sub" id="resFvSavingsSub">Projected by retirement age</span>
+                </div>
+
+                <div class="metric-card warning">
+                    <span class="metric-label">Corpus Shortfall</span>
+                    <span class="metric-value" id="resShortfall">₹0</span>
+                    <span class="metric-sub">Net gap to accumulate</span>
+                </div>
+
+                <div class="metric-card danger clickable" id="cardSip" onclick="openSipModal()">
+                    <span class="metric-label">
+                        Req. Monthly SIP
+                        <span class="click-hint">⚙️ Customizer</span>
+                    </span>
+                    <span class="metric-value" id="resMonthlySip">₹0 / mo</span>
+                    <span class="metric-sub" id="resSipRateSub">Click to customize expected return & split</span>
+                </div>
+            </div>
+
+            <!-- Highlights Bar -->
+            <div class="card" style="margin-bottom: 24px;">
+                <div class="grid-2col">
+                    <div>
+                        <span style="color: var(--text-muted); font-size: 0.85rem;">Monthly Expense at Retirement Age:</span>
+                        <div style="font-size: 1.3rem; font-weight: 700; color: #60a5fa;" id="resInflatedExpense">₹0 / mo</div>
+                    </div>
+                    <div>
+                        <span style="color: var(--text-muted); font-size: 0.85rem;">EMI Status Relative to Retirement:</span>
+                        <div style="font-size: 1.3rem; font-weight: 700; color: #34d399;" id="resEmiStatusText">Paid off before retirement</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Graph Card -->
+            <div class="card" style="margin-bottom: 24px;">
+                <div class="card-title">
+                    <span>📊 Net Worth Trajectory & Retirement Cap Line</span>
+                </div>
+                <div class="chart-container">
+                    <canvas id="retirementChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Detailed Year-by-Year Table -->
+            <div class="card">
+                <div class="card-title">
+                    <span>📋 Age-by-Age Financial Projection</span>
+                </div>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Age</th>
+                                <th>Phase</th>
+                                <th>Monthly Base Expense</th>
+                                <th>Active EMI</th>
+                                <th>Annual Outflow</th>
+                                <th>Projected Portfolio</th>
+                            </tr>
+                        </thead>
+                        <tbody id="projectionTableBody">
+                            <!-- Populated dynamically via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- SIP Customization & Breakdown Modal -->
+<div class="modal-overlay" id="sipModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>📈 Customize SIP Return & Asset Split</h3>
+            <button class="close-btn" onclick="closeSipModal()">&times;</button>
+        </div>
+
+        <div class="form-group">
+            <label for="customSipReturn">Expected Return on Monthly SIP (% p.a.)</label>
+            <div class="input-wrapper">
+                <input type="number" id="customSipReturn" class="has-suffix" value="12.0" step="0.5" oninput="calculateRetirement()">
+                <span class="input-suffix">%</span>
+            </div>
+            <span style="font-size: 0.78rem; color: var(--text-muted);">Adjust return specifically for new monthly SIPs (e.g. 12-14% Equity Mutual Funds).</span>
+        </div>
+
+        <div class="sip-breakdown-box">
+            <div style="font-weight: 600; font-size: 0.95rem; margin-bottom: 10px; color: var(--primary);">
+                Suggested Portfolio Allocation Split:
+            </div>
+            <div class="sip-row">
+                <span>🚀 Equity Mutual Funds (70%)</span>
+                <strong id="sipEquityVal">₹0 / mo</strong>
+            </div>
+            <div class="sip-row">
+                <span>🛡️ Debt / FD / PPF (20%)</span>
+                <strong id="sipDebtVal">₹0 / mo</strong>
+            </div>
+            <div class="sip-row">
+                <span>🥇 Gold / Hybrid Funds (10%)</span>
+                <strong id="sipGoldVal">₹0 / mo</strong>
+            </div>
+            <div class="sip-row" style="margin-top: 8px; font-size: 1rem;">
+                <span style="font-weight: 700;">Total Monthly SIP</span>
+                <strong style="color: var(--accent);" id="sipTotalVal">₹0 / mo</strong>
+            </div>
+        </div>
+
+        <button type="button" style="width: 100%; margin-top: 20px; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;" onclick="closeSipModal()">
+            Done & Apply
+        </button>
+    </div>
+</div>
+
+<script>
+    let myChart = null;
+    let originalRetireAge = 60;
+
+    function enableRetireTomorrow() {
+        const currentAgeInput = document.getElementById('currentAge');
+        const currentAge = parseInt(currentAgeInput.value) || 30;
+        const retireAgeInput = document.getElementById('desiredRetireAge');
+
+        if (retireAgeInput.value != currentAge) {
+            originalRetireAge = retireAgeInput.value;
+        }
+
+        retireAgeInput.value = currentAge;
+        document.getElementById('btnResetAge').style.display = 'inline-flex';
+        calculateRetirement();
+    }
+
+    function resetRetirementAge() {
+        document.getElementById('desiredRetireAge').value = originalRetireAge || 60;
+        document.getElementById('btnResetAge').style.display = 'none';
+        calculateRetirement();
+    }
+
+    function openSipModal() {
+        document.getElementById('sipModal').style.display = 'flex';
+    }
+
+    function closeSipModal() {
+        document.getElementById('sipModal').style.display = 'none';
+    }
+
+    function formatCurrency(val, symbol) {
+        if (isNaN(val) || !isFinite(val)) return symbol + "0";
+        return symbol + Math.round(val).toLocaleString();
+    }
+
+    function calculateRetirement() {
+        const symbol = document.getElementById('currencySymbol').value;
+        const prefixes = document.querySelectorAll('.curr-prefix');
+        prefixes.forEach(p => p.textContent = symbol);
+
+        const currentAge = parseInt(document.getElementById('currentAge').value);
+        const desiredRetireAge = parseInt(document.getElementById('desiredRetireAge').value);
+        const lifeExpectancy = parseInt(document.getElementById('lifeExpectancy').value);
+
+        const warningBanner = document.getElementById('warningBanner');
+
+        // Check if inputs are still being typed / empty
+        if (isNaN(currentAge) || isNaN(desiredRetireAge) || isNaN(lifeExpectancy)) {
+            warningBanner.style.display = 'none';
+            return; // Wait until numbers are entered cleanly
+        }
+
+        // Soft validation checks (No alert popups!)
+        if (desiredRetireAge < currentAge) {
+            warningBanner.style.display = 'flex';
+            document.getElementById('warningBannerText').textContent =
+                `Retirement Age (${desiredRetireAge}) cannot be less than Current Age (${currentAge}). Click "Retire Tomorrow" if you want to retire immediately.`;
+            return;
+        } else if (lifeExpectancy <= desiredRetireAge) {
+            warningBanner.style.display = 'flex';
+            document.getElementById('warningBannerText').textContent =
+                `Target Cap Age (${lifeExpectancy}) must be greater than Retirement Age (${desiredRetireAge}). Please adjust Cap Age.`;
+            return;
+        } else {
+            warningBanner.style.display = 'none';
+        }
+
+        const isRetireTomorrow = (desiredRetireAge === currentAge);
+
+        const currentSavings = parseFloat(document.getElementById('currentSavings').value) || 0;
+        const monthlyExpense = parseFloat(document.getElementById('monthlyExpense').value) || 0;
+        const emiAmount = parseFloat(document.getElementById('emiAmount').value) || 0;
+        const emiEndAge = parseInt(document.getElementById('emiEndAge').value) || currentAge;
+
+        const emiTenureYears = Math.max(0, emiEndAge - currentAge);
+        document.getElementById('emiTenureText').textContent = `EMI duration: ${emiTenureYears} years (Ends at age ${emiEndAge})`;
+
+        const inflationRate = (parseFloat(document.getElementById('inflationRate').value) || 0) / 100;
+        const preReturn = (parseFloat(document.getElementById('preRetirementReturn').value) || 0) / 100;
+        const postReturn = (parseFloat(document.getElementById('postRetirementReturn').value) || 0) / 100;
+        const sipReturnRate = (parseFloat(document.getElementById('customSipReturn').value) || 12.0) / 100;
+
+        const yearsToRetire = desiredRetireAge - currentAge;
+        const retirementYears = lifeExpectancy - desiredRetireAge;
+
+        // 1. Calculate Inflated Monthly Base Expense at Retirement Age
+        const inflatedMonthlyExpenseAtRetirement = monthlyExpense * Math.pow(1 + inflationRate, yearsToRetire);
+
+        // 2. Calculate Exact Target Corpus Needed at Retirement Age
+        // Simulate backwards year by year from lifeExpectancy down to desiredRetireAge
+        let requiredCorpusAtRetirement = 0;
+
+        for (let y = retirementYears; y >= 1; y--) {
+            const ageInRetirement = desiredRetireAge + (y - 1);
+            const yearsFromNow = ageInRetirement - currentAge;
+            const baseAnnualExpense = (monthlyExpense * 12) * Math.pow(1 + inflationRate, yearsFromNow);
+
+            // Add EMI if EMI extends past retirement age into this year
+            let emiAnnualForYear = 0;
+            if (ageInRetirement < emiEndAge) {
+                emiAnnualForYear = emiAmount * 12;
+            }
+
+            const totalAnnualOutflowYear = baseAnnualExpense + emiAnnualForYear;
+
+            // Discount back to start of retirement year using postReturn rate
+            requiredCorpusAtRetirement = (requiredCorpusAtRetirement + totalAnnualOutflowYear) / (1 + postReturn);
+        }
+
+        // 3. Future Value of current savings at retirement age
+        const fvCurrentSavings = isRetireTomorrow
+            ? currentSavings
+            : currentSavings * Math.pow(1 + preReturn, yearsToRetire);
+
+        // 4. Shortfall calculation
+        const shortfall = Math.max(0, requiredCorpusAtRetirement - fvCurrentSavings);
+
+        // 5. Calculate Required Monthly SIP based on user's custom SIP return rate
+        let requiredMonthlySip = 0;
+        if (shortfall > 0 && yearsToRetire > 0) {
+            const rMonthlySip = sipReturnRate / 12;
+            const monthsToRetire = yearsToRetire * 12;
+            // SIP Formula: FV = P * [((1 + r)^n - 1) / r] * (1 + r)
+            requiredMonthlySip = shortfall / ( ((Math.pow(1 + rMonthlySip, monthsToRetire) - 1) / rMonthlySip) * (1 + rMonthlySip) );
+        }
+
+        // Update UI Summary Cards
+        document.getElementById('resCorpus').textContent = formatCurrency(requiredCorpusAtRetirement, symbol);
+        document.getElementById('resCorpusSub').textContent = isRetireTomorrow
+            ? `Corpus required starting TODAY to last till age ${lifeExpectancy}`
+            : `At age ${desiredRetireAge} to last till age ${lifeExpectancy}`;
+
+        document.getElementById('resFvSavings').textContent = formatCurrency(fvCurrentSavings, symbol);
+        document.getElementById('resFvSavingsSub').textContent = isRetireTomorrow
+            ? `Current Liquid Savings today`
+            : `Grown at ${(preReturn * 100).toFixed(1)}% p.a. over ${yearsToRetire} yrs`;
+
+        document.getElementById('resShortfall').textContent = formatCurrency(shortfall, symbol);
+
+        if (isRetireTomorrow) {
+            if (shortfall === 0) {
+                document.getElementById('resMonthlySip').textContent = "Ready Today! 🎉";
+                document.getElementById('resSipRateSub').textContent = "Current savings fully cover retirement";
+            } else {
+                document.getElementById('resMonthlySip').textContent = "Immediate Shortfall";
+                document.getElementById('resSipRateSub').textContent = `Need additional ${formatCurrency(shortfall, symbol)} capital today`;
+            }
+        } else {
+            document.getElementById('resMonthlySip').textContent = formatCurrency(requiredMonthlySip, symbol) + " / mo";
+            document.getElementById('resSipRateSub').textContent = `Assumes ${(sipReturnRate * 100).toFixed(1)}% p.a. return. Click to adjust.`;
+        }
+
+        document.getElementById('resInflatedExpense').textContent = formatCurrency(inflatedMonthlyExpenseAtRetirement, symbol) + " / mo";
+
+        // EMI status summary
+        if (emiEndAge <= currentAge || emiAmount === 0) {
+            document.getElementById('resEmiStatusText').textContent = "No Active EMI";
+        } else if (emiEndAge <= desiredRetireAge) {
+            const yearsBeforeRetire = desiredRetireAge - emiEndAge;
+            document.getElementById('resEmiStatusText').textContent = `Ends at age ${emiEndAge} (${yearsBeforeRetire} yrs before retirement)`;
+        } else {
+            const yearsAfterRetire = emiEndAge - desiredRetireAge;
+            document.getElementById('resEmiStatusText').textContent = `Extends ${yearsAfterRetire} yrs into retirement (till age ${emiEndAge})`;
+        }
+
+        // Update SIP Split Modal Values
+        document.getElementById('sipEquityVal').textContent = formatCurrency(requiredMonthlySip * 0.70, symbol) + " / mo";
+        document.getElementById('sipDebtVal').textContent = formatCurrency(requiredMonthlySip * 0.20, symbol) + " / mo";
+        document.getElementById('sipGoldVal').textContent = formatCurrency(requiredMonthlySip * 0.10, symbol) + " / mo";
+        document.getElementById('sipTotalVal').textContent = formatCurrency(requiredMonthlySip, symbol) + " / mo";
+
+        // Build Year-by-Year Simulation
+        const labels = [];
+        const portfolioValues = [];
+        const tableBody = document.getElementById('projectionTableBody');
+        tableBody.innerHTML = '';
+
+        let currentPortfolio = currentSavings;
+        const rMonthlySip = sipReturnRate / 12;
+
+        for (let age = currentAge; age <= lifeExpectancy; age++) {
+            const yearsElapsed = age - currentAge;
+            const isRetired = age >= desiredRetireAge;
+            const isEmiActive = age < emiEndAge;
+
+            let currentYearBaseMonthlyExp = monthlyExpense * Math.pow(1 + inflationRate, yearsElapsed);
+            let activeEmiMonthly = isEmiActive ? emiAmount : 0;
+            let totalMonthlyOutflow = currentYearBaseMonthlyExp + activeEmiMonthly;
+            let totalAnnualOutflow = totalMonthlyOutflow * 12;
+
+            let phaseBadge = isRetired
+                ? `<span class="badge badge-retired">Retired</span>`
+                : `<span class="badge badge-active">Working</span>`;
+
+            let emiBadge = isEmiActive
+                ? `<span class="badge badge-active">${formatCurrency(emiAmount, symbol)}/mo</span>`
+                : `<span class="badge badge-ended">Paid Off</span>`;
+
+            // Calculate portfolio value progression
+            if (!isRetired) {
+                // Working phase: grow existing portfolio + add monthly SIP
+                for (let m = 0; m < 12; m++) {
+                    currentPortfolio = (currentPortfolio + requiredMonthlySip) * (1 + rMonthlySip);
+                }
+            } else {
+                // Retirement phase: withdraw annual outflow, remaining portfolio grows at postReturn
+                currentPortfolio = Math.max(0, (currentPortfolio - totalAnnualOutflow) * (1 + postReturn));
+            }
+
+            labels.push(`Age ${age}`);
+            portfolioValues.push(Math.round(currentPortfolio));
+
+            // Populate table row
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><strong>${age}</strong></td>
+                <td>${phaseBadge}</td>
+                <td>${formatCurrency(currentYearBaseMonthlyExp, symbol)}</td>
+                <td>${emiBadge}</td>
+                <td>${formatCurrency(totalAnnualOutflow, symbol)}</td>
+                <td><strong>${formatCurrency(currentPortfolio, symbol)}</strong></td>
+            `;
+            tableBody.appendChild(tr);
+        }
+
+        // Render Chart
+        updateChart(labels, portfolioValues, desiredRetireAge, currentAge);
+    }
+
+    function updateChart(labels, dataPoints, desiredRetireAge, currentAge) {
+        const ctx = document.getElementById('retirementChart').getContext('2d');
+
+        if (myChart) {
+            myChart.destroy();
+        }
+
+        const retirementIndex = Math.max(0, desiredRetireAge - currentAge);
+        const pointBackgroundColors = dataPoints.map((_, idx) => idx < retirementIndex ? '#3b82f6' : '#10b981');
+
+        myChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Projected Net Worth Portfolio',
+                    data: dataPoints,
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.3,
+                    pointBackgroundColor: pointBackgroundColors,
+                    pointRadius: 4,
+                    pointHoverRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        labels: { color: '#94a3b8', font: { family: 'Inter' } }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) label += ': ';
+                                if (context.parsed.y !== null) {
+                                    label += Math.round(context.parsed.y).toLocaleString();
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                        ticks: { color: '#94a3b8', font: { family: 'Inter' } }
+                    },
+                    y: {
+                        grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                        ticks: {
+                            color: '#94a3b8',
+                            font: { family: 'Inter' },
+                            callback: function(value) {
+                                if (value >= 1e7) return (value / 1e7).toFixed(1) + ' Cr';
+                                if (value >= 1e5) return (value / 1e5).toFixed(1) + ' L';
+                                if (value >= 1e3) return (value / 1e3).toFixed(0) + ' k';
+                                return value;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Initial run on load
+    window.onload = function() {
+        calculateRetirement();
+    };
+</script>
+
+</body>
+</html>
